@@ -23,9 +23,8 @@ admin.initializeApp({
 const app = express();
 const PORT = 4000;
 
-// Updated route with 3 params
-app.get('/:targetDeviceToken/:title/:body', async (req, res) => {
-  const { targetDeviceToken, title, body } = req.params;
+app.get('/:targetDeviceToken', async (req, res) => {
+  const targetDeviceToken = req.params.targetDeviceToken;
 
   if (!targetDeviceToken) {
     return res.status(400).json({ error: 'Device token is missing in the URL.' });
@@ -33,8 +32,8 @@ app.get('/:targetDeviceToken/:title/:body', async (req, res) => {
 
   const message = {
     data: {
-      "title": decodeURIComponent(title),
-      "body": decodeURIComponent(body),
+      "title": "New Order!",
+      "body": "Check your dashboard now!",
       "icon": "/qellner_logo_icon.png",
       "url": "https://qellner.com"
     },
@@ -44,18 +43,10 @@ app.get('/:targetDeviceToken/:title/:body', async (req, res) => {
   try {
     const response = await admin.messaging().send(message);
     console.log('Successfully sent message:', response);
-    res.status(200).json({
-      success: true,
-      messageId: response,
-      description: 'FCM message sent successfully.'
-    });
+    res.status(200).json({ success: true, messageId: response, description: 'FCM message sent successfully.' });
   } catch (error) {
     console.error('Error sending message:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to send FCM message.',
-      details: error.message
-    });
+    res.status(500).json({ success: false, error: 'Failed to send FCM message.', details: error.message });
   }
 });
 
