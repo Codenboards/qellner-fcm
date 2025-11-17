@@ -23,33 +23,58 @@ admin.initializeApp({
 const app = express();
 const PORT = 4000;
 
-app.get('/:targetDeviceToken', async (req, res) => {
-  const targetDeviceToken = req.params.targetDeviceToken;
+/**
+ * Route:
+ *   /:token/:title/:body
+ *
+ * Example final URL (encoded):
+ *   https://fcm.qellner.com/abcd123/Order%2012%21/Check%20Dashboard
+ */
+app.get('/:token/:title/:body', async (req, res) => {
+  const { token, title, body } = req.params;
 
-  if (!targetDeviceToken) {
-    return res.status(400).json({ error: 'Device token is missing in the URL.' });
+  if (!token || !title || !body) {
+    return res.status(400).json({
+      error: 'Missing token, title, or body in the URL.'
+    });
   }
+
+  const decodedToken = decodeURIComponent(token);
+  const decodedTitle = decodeURIComponent(title);
+  const decodedBody = decodeURIComponent(body);
 
   const message = {
     data: {
-      "title": "New Order!",
-      "body": "Check your dashboard now!",
-      "icon": "/qellner_logo_icon.png",
-      "url": "https://qellner.com"
+      title: decodedTitle,
+      body: decodedBody,
+      icon: "/qellner_logo_icon.png",
+      url: "https://qellner.com"
     },
-    token: targetDeviceToken
+    token: decodedToken
   };
 
   try {
     const response = await admin.messaging().send(message);
     console.log('Successfully sent message:', response);
-    res.status(200).json({ success: true, messageId: response, description: 'FCM message sent successfully.' });
+    res.status(200).json({
+      success: true,
+      messageId: response,
+      sent: {
+        token: decodedToken,
+        title: decodedTitle,
+        body: decodedBody
+      }
+    });
   } catch (error) {
     console.error('Error sending message:', error);
-    res.status(500).json({ success: false, error: 'Failed to send FCM message.', details: error.message });
+    res.status(500).json({
+      success: false,
+      error: 'Failed to send FCM message.',
+      details: error.message
+    });
   }
 });
 
 app.listen(PORT, () => {
-  console.log(`Express server listening on port ${PORT}`);
+  console.log(`FCM server running on port ${PORT}`);
 });
