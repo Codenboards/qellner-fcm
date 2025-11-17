@@ -1,6 +1,7 @@
 const express = require('express');
 const admin = require('firebase-admin');
 
+// --- Firebase Initialization (No Change) ---
 const jsonString = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
 
 if (!jsonString) {
@@ -23,17 +24,26 @@ admin.initializeApp({
 const app = express();
 const PORT = 4000;
 
-app.get('/:targetDeviceToken', async (req, res) => {
-  const targetDeviceToken = req.params.targetDeviceToken;
+// --- Middleware to parse JSON body (NEW) ---
+app.use(express.json());
 
-  if (!targetDeviceToken) {
-    return res.status(400).json({ error: 'Device token is missing in the URL.' });
+// --- Updated POST route handler ---
+app.post('/', async (req, res) => {
+  // Extract data from the request body (NEW)
+  const targetDeviceToken = req.body.token;
+  const notificationTitle = req.body.title;
+  const notificationBody = req.body.body;
+
+  // Validation
+  if (!targetDeviceToken || !notificationTitle || !notificationBody) {
+    return res.status(400).json({ error: 'Missing required fields: token, title, or body in the request body.' });
   }
 
   const message = {
     data: {
-      "title": "New Order!",
-      "body": "Check your dashboard now!",
+      // Use the dynamic values from the PocketBase hook (UPDATED)
+      "title": notificationTitle,
+      "body": notificationBody,
       "icon": "/qellner_logo_icon.png",
       "url": "https://qellner.com"
     },
